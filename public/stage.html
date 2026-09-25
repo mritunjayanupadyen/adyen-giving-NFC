@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adyen, SAP & Parloa Giving — Live Stage Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    @keyframes celebration-pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+    .celebrate-glow {
+      animation: celebration-pulse 0.6s ease-in-out 3;
+      box-shadow: 0 0 50px rgba(10, 191, 83, 0.45);
+    }
+    @keyframes progress-deplete {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+    .progress-timer-bar {
+      animation: progress-deplete 10s linear forwards;
+    }
+  </style>
+</head>
+<body class="bg-[#080d19] text-white min-h-screen p-6 md:p-8 flex flex-col font-sans select-none justify-between">
+
+  <!-- Milestone Celebration Modal -->
+  <div id="milestone-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden transition-opacity duration-300">
+    <div class="bg-[#0e1628] border-2 border-emerald-400/80 rounded-3xl p-10 max-w-xl w-full text-center shadow-[0_0_90px_rgba(10,191,83,0.45)] transform transition-transform duration-300 scale-95 relative overflow-hidden">
+      <div class="text-7xl mb-4 animate-bounce">🎉</div>
+      <span class="inline-block bg-emerald-500/20 text-emerald-400 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-emerald-400/40 mb-3">
+        Milestone Achieved
+      </span>
+      <h2 id="milestone-title" class="text-3xl font-extrabold text-white tracking-tight mb-2">
+        We just crossed the $2,500 Milestone!
+      </h2>
+      <p class="text-slate-300 text-base font-medium mb-1">
+        Thank you to everyone in the room! Every tap at the terminal makes an immediate impact.
+      </p>
+      <div class="flex flex-col items-center gap-3 mt-6">
+        <button onclick="dismissMilestone()" class="w-full bg-gradient-to-r from-[#0abf53] to-[#008FD3] hover:brightness-110 active:scale-95 text-slate-950 font-black text-lg py-4 px-8 rounded-2xl shadow-xl transition-all">
+          Keep the Momentum Going! 🚀
+        </button>
+        <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mt-1">
+          <div id="countdown-progress" class="bg-emerald-400 h-full w-full"></div>
+        </div>
+        <p id="countdown-text" class="text-xs text-slate-400">
+          Auto-resuming in 10s...
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl w-full mx-auto flex-grow flex flex-col justify-start">
+
+    <!-- Top Navigation & Triple Branding Header -->
+    <header class="flex flex-col sm:flex-row items-center justify-between pb-6 mb-6 border-b border-slate-800/80 gap-4">
+
+      <!-- White pill container to perfectly blend the JPEG backgrounds -->
+      <div class="bg-white px-6 py-3 rounded-2xl flex items-center space-x-5 shadow-lg">
+        <!-- Adyen Logo -->
+        <img src="/images/Adyen%20Logo.jpeg" alt="Adyen" class="h-7 object-contain" />
+        <span class="text-slate-300 font-light text-xl">✕</span>
+        <!-- SAP Logo -->
+        <img src="/images/SAP%20LOGO.jpeg" alt="SAP" class="h-9 object-contain" />
+        <span class="text-slate-300 font-light text-xl">✕</span>
+        <!-- Parloa Logo with Fallback -->
+        <img src="/images/parloa_logo.jpeg" onerror="this.onerror=null; this.src='/images/image%20(6).png';" alt="Parloa" class="h-7 object-contain" />
+
+        <div class="h-6 w-px bg-slate-300 hidden sm:block mx-2"></div>
+        <span class="text-slate-500 font-bold text-sm hidden sm:inline tracking-widest uppercase">
+          Live Stream
+        </span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-2">
+          <span class="text-xs text-slate-400 font-medium">Next Goal:</span>
+          <span id="target-pill-amount" class="text-sm font-bold text-emerald-400">$2,500 USD</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 px-3 py-2 rounded-xl flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="text-xs text-slate-300 font-semibold tracking-wider uppercase">Live</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Stage Grid -->
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-grow">
+      <!-- Left Column: Total Raised Card & Single Bar Chart -->
+      <section class="lg:col-span-7 flex flex-col gap-6">
+        <div id="total-card" class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-8 shadow-2xl transition-all duration-300">
+          <div class="text-xs font-bold text-[#0abf53] tracking-wider uppercase mb-4">
+            ✨ TOTAL RAISED TODAY
+          </div>
+          <div class="flex items-baseline gap-3 mb-6">
+            <span class="text-5xl md:text-6xl font-black text-[#0abf53]">$</span>
+            <span id="total-amount" class="text-7xl md:text-8xl font-black tracking-tight text-white leading-none">0</span>
+            <span class="text-2xl font-bold text-slate-400 ml-2">USD</span>
+          </div>
+          <div class="flex justify-between items-center pt-5 border-t border-slate-800/80">
+            <span class="text-base font-medium text-slate-400">Total Donor Contributions:</span>
+            <span id="total-donors" class="text-2xl font-extrabold text-white">0</span>
+          </div>
+        </div>
+        <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-6 shadow-2xl flex-grow flex flex-col justify-between">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Milestone Progress</h3>
+            <span id="chart-subtext" class="text-xs text-slate-400 font-medium">Target: $2,500 USD</span>
+          </div>
+          <div class="relative w-full h-56 flex-grow">
+            <canvas id="givingChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Real-Time Activity Feed -->
+      <section class="lg:col-span-5 flex flex-col">
+        <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-6 shadow-2xl flex flex-col h-full">
+          <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800/80">
+            <span class="text-xs font-bold text-slate-400 tracking-wider uppercase">REAL-TIME ACTIVITY FEED</span>
+            <span class="text-xs font-medium text-slate-500">Live from Las Vegas</span>
+          </div>
+          <div id="activity-feed" class="flex flex-col gap-3 overflow-y-auto flex-grow max-h-[500px]">
+            <div class="text-center py-20 text-slate-500 text-sm">Waiting for first contribution...</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Discreet Admin Indicator -->
+    <div id="admin-indicator" class="hidden text-right text-[10px] text-emerald-500/80 font-mono tracking-widest uppercase pt-2">
+      ⚡ Presenter Admin Mode Active (Hotkeys 1, 2, 3, M, Shift+R Enabled)
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+    let currentTotal = 0;
+    let lastCelebratedMilestone = 0;
+    let autoDismissTimeout = null;
+    let countdownInterval = null;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get('admin') === 'adyen2026';
+    if (isAdmin) document.getElementById('admin-indicator').classList.remove('hidden');
+
+    const ctx = document.getElementById('givingChart').getContext('2d');
+    const givingChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Total Raised'],
+        datasets: [{
+          label: 'USD',
+          data: [0],
+          backgroundColor: '#0abf53',
+          hoverBackgroundColor: '#08a346',
+          borderRadius: 12,
+          barThickness: 70
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            suggestedMax: 2500,
+            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+            ticks: { color: '#94a3b8', font: { family: 'sans-serif', size: 12 }, callback: (v) => '$' + v.toLocaleString() }
+          },
+          x: { grid: { display: false }, ticks: { color: '#cbd5e1', font: { weight: 'bold', size: 14 } } }
+        }
+      }
+    });
+
+    function triggerConfetti() {
+      const count = 200;
+      const defaults = { origin: { y: 0.7 } };
+      function fire(ratio, opts) { confetti(Object.assign({}, defaults, opts, { particleCount: Math.floor(count * ratio) })); }
+      fire(0.25, { spread: 26, startVelocity: 55 });
+      fire(0.2, { spread: 60 });
+      fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+      fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+      fire(0.1, { spread: 120, startVelocity: 45 });
+    }
+
+    function checkMilestone(total) {
+      const milestoneReached = Math.floor(total / 2500) * 2500;
+      if (milestoneReached >= 2500 && milestoneReached > lastCelebratedMilestone) {
+        lastCelebratedMilestone = milestoneReached;
+        showMilestoneModal(milestoneReached);
+      }
+    }
+
+    function showMilestoneModal(amount) {
+      const modal = document.getElementById('milestone-modal');
+      document.getElementById('milestone-title').textContent = `We just crossed the $${amount.toLocaleString()} Milestone!`;
+      modal.classList.remove('hidden');
+
+      const progress = document.getElementById('countdown-progress');
+      progress.classList.remove('progress-timer-bar');
+      void progress.offsetWidth; 
+      progress.classList.add('progress-timer-bar');
+
+      if (autoDismissTimeout) clearTimeout(autoDismissTimeout);
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      let secondsLeft = 10;
+      const text = document.getElementById('countdown-text');
+      text.textContent = `Auto-resuming in ${secondsLeft}s...`;
+
+      countdownInterval = setInterval(() => {
+        secondsLeft -= 1;
+        if (secondsLeft > 0) text.textContent = `Auto-resuming in ${secondsLeft}s...`;
+        else clearInterval(countdownInterval);
+      }, 1000);
+
+      autoDismissTimeout = setTimeout(dismissMilestone, 10000);
+      triggerConfetti();
+    }
+
+    function dismissMilestone() {
+      document.getElementById('milestone-modal').classList.add('hidden');
+      if (autoDismissTimeout) clearTimeout(autoDismissTimeout);
+      if (countdownInterval) clearInterval(countdownInterval);
+    }
+
+    function updateUI(state, isNew = false) {
+      currentTotal = state.totalAmountUSD || 0;
+      document.getElementById('total-amount').textContent = currentTotal.toLocaleString();
+      document.getElementById('total-donors').textContent = state.totalDonors || 0;
+
+      const nextGoal = (Math.floor(currentTotal / 2500) + 1) * 2500;
+      document.getElementById('target-pill-amount').textContent = `$${nextGoal.toLocaleString()} USD`;
+      document.getElementById('chart-subtext').textContent = `Target: $${nextGoal.toLocaleString()} USD`;
+
+      givingChart.data.datasets[0].data = [currentTotal];
+      givingChart.options.scales.y.suggestedMax = Math.max(nextGoal, currentTotal + 500);
+      givingChart.update();
+
+      const feedContainer = document.getElementById('activity-feed');
+      const items = state.recentDonations || [];
+      if (items.length > 0) {
+        feedContainer.innerHTML = items.map(item => {
+          // Convert to Las Vegas time explicitly (Pacific Time)
+          const lvTime = new Date().toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+          // Grab booth name robustly (stripping any terminal IDs separated by dashes)
+          let rawBooth = item.terminal || item.terminalName || item.terminalId || 'Booth';
+          let boothName = rawBooth.split('-')[0].trim();
+
+          return `
+          <div class="flex justify-between items-center bg-[#080d19] border border-slate-800/80 rounded-2xl p-4 transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-emerald-950/70 border border-emerald-500/40 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="text-sm font-bold text-white">Recorded at ${boothName}</div>
+                <div class="text-[11px] text-slate-400 font-medium uppercase">${lvTime} Pacific Time</div>
+              </div>
+            </div>
+            <div class="text-lg font-bold text-[#0abf53] font-mono">
+              +$10 <span class="text-xs text-slate-400 font-sans font-normal">USD</span>
+            </div>
+          </div>
+        `}).join('');
+      }
+
+      if (isNew) {
+        const card = document.getElementById('total-card');
+        card.classList.add('celebrate-glow');
+        setTimeout(() => card.classList.remove('celebrate-glow'), 2000);
+        triggerConfetti();
+        checkMilestone(currentTotal);
+      }
+    }
+
+    socket.on('initial_state', (state) => updateUI(state, false));
+    socket.on('donation_received', (data) => updateUI(data.state, true));
+
+    window.addEventListener('keydown', (e) => {
+      if (!isAdmin) return; 
+      if (e.key === '1') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10, terminalName: 'Booth 1' }) });
+      if (e.key === '2') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10, terminalName: 'Booth 2' }) });
+      if (e.key === '3') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10, terminalName: 'Booth 3' }) });
+      if (e.key.toLowerCase() === 'm') fetch('/api/jump-milestone', { method: 'POST' });
+      if (e.shiftKey && e.key.toLowerCase() === 'r') {
+        if (confirm("Reset dashboard to clean $0 USD?")) fetch('/api/reset', { method: 'POST' });
+      }
+    });
+  </script>
+</body>
+</html>

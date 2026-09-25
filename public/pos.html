@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Charity Tap POS - Universal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { -webkit-tap-highlight-color: transparent; }
+    .pulse-ring {
+      box-shadow: 0 0 0 0 rgba(10, 191, 83, 0.7);
+      animation: pulse 1.6s infinite cubic-bezier(0.66, 0, 0, 1);
+    }
+    @keyframes pulse {
+      to { box-shadow: 0 0 0 28px rgba(10, 191, 83, 0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between p-5 select-none">
+
+  <!-- Header & Terminal Dropdown Selector -->
+  <header class="w-full max-w-sm mx-auto pt-2">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-lg">
+      <label for="terminal-select" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
+        <span>Target Terminal</span>
+        <span class="flex items-center gap-1.5 text-emerald-400 font-semibold lowercase">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          online
+        </span>
+      </label>
+
+      <!-- Dynamic Dropdown -->
+      <div class="relative">
+        <select id="terminal-select" onchange="onTerminalChanged()"
+          class="w-full bg-slate-800 text-white text-sm font-semibold rounded-xl px-3.5 py-2.5 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none transition-colors">
+          <option value="" disabled selected>Loading terminals...</option>
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- POIID Display -->
+      <div class="mt-2 flex items-center justify-between text-xs text-slate-400 px-0.5">
+        <span>POIID:</span>
+        <span id="active-poiid" class="font-mono text-emerald-300 font-medium">---</span>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <h1 class="text-xl font-black text-white tracking-tight">Tap to Donate</h1>
+      <p class="text-xs text-slate-400 mt-0.5">Each tap contributes <strong class="text-emerald-400 font-semibold">$10 USD</strong> to charity</p>
+    </div>
+  </header>
+
+  <!-- Interactive Action Center -->
+  <main class="flex flex-col items-center justify-center my-auto pb-10">
+    <button id="start-btn" onclick="startTapSession()"
+      class="w-56 h-56 rounded-full bg-gradient-to-tr from-[#0abf53] to-[#00c853] text-slate-950 font-black text-3xl uppercase tracking-wider shadow-2xl transition-all duration-200 active:scale-95 flex flex-col items-center justify-center pulse-ring">
+      <span id="btn-icon" class="text-4xl mb-2">⚡</span>
+      <span id="btn-text">START</span>
+    </button>
+
+    <div id="status-card" class="mt-7 text-center min-h-[60px] flex flex-col items-center justify-center">
+      <p id="status-title" class="text-sm font-semibold text-slate-300">Ready for next tap</p>
+      <p id="status-desc" class="text-xs text-slate-500 mt-0.5">Press START to activate selected terminal</p>
+    </div>
+  </main>
+
+  <script>
+    const socket = io();
+    const terminalSelect = document.getElementById('terminal-select');
+    const activePoiidSpan = document.getElementById('active-poiid');
+    const startBtn = document.getElementById('start-btn');
+    const btnText = document.getElementById('btn-text');
+    const btnIcon = document.getElementById('btn-icon');
+    const statusTitle = document.getElementById('status-title');
+    const statusDesc = document.getElementById('status-desc');
+
+    let terminalsMap = {};
+    let isBusy = false;
+
+    async function loadTerminals() {
+      try {
+        const res = await fetch('/api/terminals');
+        const data = await res.json();
+        if (data.success && data.terminals.length > 0) {
+          terminalSelect.innerHTML = '';
+          data.terminals.forEach(term => {
+            terminalsMap[term.id] = term;
+            const opt = document.createElement('option');
+            opt.value = term.id;
+            opt.textContent = `${term.name} (${term.poiid})`;
+            terminalSelect.appendChild(opt);
+          });
+
+          const urlParams = new URLSearchParams(window.location.search);
+          const savedTerminal = urlParams.get('terminal') || localStorage.getItem('selected_terminal') || data.terminals[0].id;
+
+          if (terminalsMap[savedTerminal]) {
+            terminalSelect.value = savedTerminal;
+          }
+          updateTerminalUI();
+        }
+      } catch (err) {
+        console.error('Failed to load terminals:', err);
+      }
+    }
+
+    function onTerminalChanged() {
+      const selectedId = terminalSelect.value;
+      localStorage.setItem('selected_terminal', selectedId);
+      updateTerminalUI();
+    }
+
+    function updateTerminalUI() {
+      const current = terminalsMap[terminalSelect.value];
+      if (current) {
+        activePoiidSpan.textContent = current.poiid;
+      }
+    }
+
+    async function startTapSession() {
+      if (isBusy) return;
+      const selectedId = terminalSelect.value;
+      const currentTerminal = terminalsMap[selectedId];
+
+      if (!currentTerminal) {
+        alert('Please choose a terminal from the dropdown.');
+        return;
+      }
+
+      isBusy = true;
+      terminalSelect.disabled = true;
+
+      startBtn.classList.remove('pulse-ring', 'bg-gradient-to-tr', 'from-[#0abf53]', 'to-[#00c853]', 'text-slate-950');
+      startBtn.classList.add('bg-amber-500', 'text-slate-950', 'animate-pulse');
+      btnIcon.textContent = '💳';
+      btnText.textContent = 'TAP CARD';
+      statusTitle.textContent = `Present card on ${currentTerminal.name}`;
+      statusTitle.className = 'text-sm font-bold text-amber-400';
+      statusDesc.textContent = `Terminal ${currentTerminal.poiid} is waiting for tap...`;
+
+      if (navigator.vibrate) navigator.vibrate(50);
+
+      try {
+        const response = await fetch('/api/start-tap', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ terminalId: selectedId })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          startBtn.classList.remove('bg-amber-500', 'animate-pulse');
+          startBtn.classList.add('bg-emerald-500', 'text-slate-950');
+          btnIcon.textContent = '🎉';
+          btnText.textContent = 'SUCCESS!';
+          statusTitle.textContent = '+$10 USD Contributed!';
+          statusTitle.className = 'text-base font-black text-emerald-400';
+          statusDesc.textContent = `Recorded at ${result.terminal}`;
+
+          if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        } else {
+          throw new Error(result.error || 'Tap failed');
+        }
+      } catch (err) {
+        startBtn.classList.remove('bg-amber-500', 'animate-pulse');
+        startBtn.classList.add('bg-rose-600', 'text-white');
+        btnIcon.textContent = '⚠️';
+        btnText.textContent = 'RETRY';
+        statusTitle.textContent = 'Session Timed Out or Cancelled';
+        statusTitle.className = 'text-sm font-bold text-rose-400';
+        statusDesc.textContent = 'Press START to try again';
+      } finally {
+        setTimeout(resetButton, 3500);
+      }
+    }
+
+    function resetButton() {
+      startBtn.className = 'w-56 h-56 rounded-full bg-gradient-to-tr from-[#0abf53] to-[#00c853] text-slate-950 font-black text-3xl uppercase tracking-wider shadow-2xl transition-all duration-200 active:scale-95 flex flex-col items-center justify-center pulse-ring';
+      btnIcon.textContent = '⚡';
+      btnText.textContent = 'START';
+      statusTitle.textContent = 'Ready for next tap';
+      statusTitle.className = 'text-sm font-semibold text-slate-300';
+      statusDesc.textContent = 'Press START to activate selected terminal';
+      terminalSelect.disabled = false;
+      isBusy = false;
+    }
+
+    socket.on('initial_state', (state) => {
+      if (state.terminals) {
+        terminalsMap = state.terminals;
+        updateTerminalUI();
+      }
+    });
+
+    socket.on('tap_success', (data) => {
+      if (data.state.terminals) {
+        terminalsMap = data.state.terminals;
+        updateTerminalUI();
+      }
+    });
+
+    loadTerminals();
+  </script>
+</body>
+</html>
