@@ -2,210 +2,94 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Charity Tap POS - Universal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adyen Charity POS</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    body { -webkit-tap-highlight-color: transparent; }
-    .pulse-ring {
-      box-shadow: 0 0 0 0 rgba(10, 191, 83, 0.7);
-      animation: pulse 1.6s infinite cubic-bezier(0.66, 0, 0, 1);
-    }
-    @keyframes pulse {
-      to { box-shadow: 0 0 0 28px rgba(10, 191, 83, 0); }
-    }
-  </style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between p-5 select-none">
+<body class="bg-[#080d19] text-white min-h-screen flex flex-col items-center justify-center p-6 select-none font-sans">
 
-  <!-- Header & Terminal Dropdown Selector -->
-  <header class="w-full max-w-sm mx-auto pt-2">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-lg">
-      <label for="terminal-select" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
-        <span>Target Terminal</span>
-        <span class="flex items-center gap-1.5 text-emerald-400 font-semibold lowercase">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          online
-        </span>
-      </label>
+  <div class="max-w-sm w-full bg-[#0c1424] border border-slate-800/90 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
 
-      <!-- Dynamic Dropdown -->
-      <div class="relative">
-        <select id="terminal-select" onchange="onTerminalChanged()"
-          class="w-full bg-slate-800 text-white text-sm font-semibold rounded-xl px-3.5 py-2.5 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none transition-colors">
-          <option value="" disabled selected>Loading terminals...</option>
-        </select>
-        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </div>
-      </div>
+    <!-- Header Logos -->
+    <div class="bg-white px-4 py-3 rounded-2xl flex items-center space-x-3 shadow-lg mb-10 w-full justify-center">
+      <img src="/images/Adyen%20Logo.jpeg" alt="Adyen" class="h-5 object-contain" />
+      <span class="text-slate-300 font-light text-sm">✕</span>
+      <img src="/images/SAP%20LOGO.jpeg" alt="SAP" class="h-7 object-contain" />
+      <span class="text-slate-300 font-light text-sm">✕</span>
+      <img src="/images/parloa_logo.jpeg" alt="Parloa" class="h-5 object-contain" />
+    </div>
 
-      <!-- POIID Display -->
-      <div class="mt-2 flex items-center justify-between text-xs text-slate-400 px-0.5">
-        <span>POIID:</span>
-        <span id="active-poiid" class="font-mono text-emerald-300 font-medium">---</span>
+    <h1 class="text-xl font-bold text-slate-300 uppercase tracking-widest mb-6 text-center">Select Your Booth</h1>
+
+    <!-- Terminal Dropdown -->
+    <div class="relative w-full mb-10">
+      <select id="terminal-select" class="w-full bg-slate-900 border-2 border-slate-700 text-emerald-400 font-bold rounded-2xl p-5 appearance-none focus:outline-none focus:border-emerald-500 text-xl text-center shadow-inner transition-colors cursor-pointer">
+        <option value="" disabled selected>Loading booths...</option>
+      </select>
+      <!-- Dropdown Icon -->
+      <div class="absolute inset-y-0 right-5 flex items-center pointer-events-none">
+        <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
       </div>
     </div>
 
-    <div class="text-center mt-4">
-      <h1 class="text-xl font-black text-white tracking-tight">Tap to Donate</h1>
-      <p class="text-xs text-slate-400 mt-0.5">Each tap contributes <strong class="text-emerald-400 font-semibold">$10 USD</strong> to charity</p>
-    </div>
-  </header>
-
-  <!-- Interactive Action Center -->
-  <main class="flex flex-col items-center justify-center my-auto pb-10">
-    <button id="start-btn" onclick="startTapSession()"
-      class="w-56 h-56 rounded-full bg-gradient-to-tr from-[#0abf53] to-[#00c853] text-slate-950 font-black text-3xl uppercase tracking-wider shadow-2xl transition-all duration-200 active:scale-95 flex flex-col items-center justify-center pulse-ring">
-      <span id="btn-icon" class="text-4xl mb-2">⚡</span>
-      <span id="btn-text">START</span>
+    <!-- Giant Start Button -->
+    <button id="start-btn" class="w-full bg-gradient-to-r from-[#0abf53] to-[#08a346] hover:brightness-110 active:scale-95 transition-all text-white font-black text-4xl py-8 rounded-2xl shadow-[0_0_50px_rgba(10,191,83,0.3)] border border-emerald-400/50 flex flex-col items-center gap-2">
+      <span>START</span>
+      <span class="text-sm font-medium tracking-widest uppercase opacity-80">Tap to Donate</span>
     </button>
-
-    <div id="status-card" class="mt-7 text-center min-h-[60px] flex flex-col items-center justify-center">
-      <p id="status-title" class="text-sm font-semibold text-slate-300">Ready for next tap</p>
-      <p id="status-desc" class="text-xs text-slate-500 mt-0.5">Press START to activate selected terminal</p>
-    </div>
-  </main>
+  </div>
 
   <script>
-    const socket = io();
-    const terminalSelect = document.getElementById('terminal-select');
-    const activePoiidSpan = document.getElementById('active-poiid');
-    const startBtn = document.getElementById('start-btn');
-    const btnText = document.getElementById('btn-text');
-    const btnIcon = document.getElementById('btn-icon');
-    const statusTitle = document.getElementById('status-title');
-    const statusDesc = document.getElementById('status-desc');
+    // Hardcoded terminals based on your dashboard logic (Replace or integrate with your fetch API if they are dynamic)
+    const availableTerminals = [
+      "P400Plus-807243868", 
+      "P400Plus-454155335", 
+      "P400Plus-452806254"
+    ];
 
-    let terminalsMap = {};
-    let isBusy = false;
+    const select = document.getElementById('terminal-select');
 
-    async function loadTerminals() {
-      try {
-        const res = await fetch('/api/terminals');
-        const data = await res.json();
-        if (data.success && data.terminals.length > 0) {
-          terminalSelect.innerHTML = '';
-          data.terminals.forEach(term => {
-            terminalsMap[term.id] = term;
-            const opt = document.createElement('option');
-            opt.value = term.id;
-            opt.textContent = `${term.name} (${term.poiid})`;
-            terminalSelect.appendChild(opt);
-          });
+    function populateDropdown(terminals) {
+      select.innerHTML = ''; // Clear loading state
 
-          const urlParams = new URLSearchParams(window.location.search);
-          const savedTerminal = urlParams.get('terminal') || localStorage.getItem('selected_terminal') || data.terminals[0].id;
+      terminals.forEach((terminalId, index) => {
+        // Extract the last 5 digits of the terminal ID
+        const last5 = terminalId.slice(-5);
+        const boothNum = index + 1; 
 
-          if (terminalsMap[savedTerminal]) {
-            terminalSelect.value = savedTerminal;
-          }
-          updateTerminalUI();
-        }
-      } catch (err) {
-        console.error('Failed to load terminals:', err);
-      }
+        const option = document.createElement('option');
+        option.value = terminalId;
+        // Format to: Booth X-12345
+        option.textContent = `Booth ${boothNum}-${last5}`;
+
+        select.appendChild(option);
+      });
     }
 
-    function onTerminalChanged() {
-      const selectedId = terminalSelect.value;
-      localStorage.setItem('selected_terminal', selectedId);
-      updateTerminalUI();
-    }
+    // Initialize dropdown
+    populateDropdown(availableTerminals);
 
-    function updateTerminalUI() {
-      const current = terminalsMap[terminalSelect.value];
-      if (current) {
-        activePoiidSpan.textContent = current.poiid;
-      }
-    }
+    // Start Button Logic
+    document.getElementById('start-btn').addEventListener('click', () => {
+      const selectedTerminal = select.value;
+      if (!selectedTerminal) return alert('Please select a booth first!');
 
-    async function startTapSession() {
-      if (isBusy) return;
-      const selectedId = terminalSelect.value;
-      const currentTerminal = terminalsMap[selectedId];
-
-      if (!currentTerminal) {
-        alert('Please choose a terminal from the dropdown.');
-        return;
-      }
-
-      isBusy = true;
-      terminalSelect.disabled = true;
-
-      startBtn.classList.remove('pulse-ring', 'bg-gradient-to-tr', 'from-[#0abf53]', 'to-[#00c853]', 'text-slate-950');
-      startBtn.classList.add('bg-amber-500', 'text-slate-950', 'animate-pulse');
-      btnIcon.textContent = '💳';
-      btnText.textContent = 'TAP CARD';
-      statusTitle.textContent = `Present card on ${currentTerminal.name}`;
-      statusTitle.className = 'text-sm font-bold text-amber-400';
-      statusDesc.textContent = `Terminal ${currentTerminal.poiid} is waiting for tap...`;
-
-      if (navigator.vibrate) navigator.vibrate(50);
-
-      try {
-        const response = await fetch('/api/start-tap', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ terminalId: selectedId })
-        });
-        const result = await response.json();
-
-        if (result.success) {
-          startBtn.classList.remove('bg-amber-500', 'animate-pulse');
-          startBtn.classList.add('bg-emerald-500', 'text-slate-950');
-          btnIcon.textContent = '🎉';
-          btnText.textContent = 'SUCCESS!';
-          statusTitle.textContent = '+$10 USD Contributed!';
-          statusTitle.className = 'text-base font-black text-emerald-400';
-          statusDesc.textContent = `Recorded at ${result.terminal}`;
-
-          if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        } else {
-          throw new Error(result.error || 'Tap failed');
-        }
-      } catch (err) {
-        startBtn.classList.remove('bg-amber-500', 'animate-pulse');
-        startBtn.classList.add('bg-rose-600', 'text-white');
-        btnIcon.textContent = '⚠️';
-        btnText.textContent = 'RETRY';
-        statusTitle.textContent = 'Session Timed Out or Cancelled';
-        statusTitle.className = 'text-sm font-bold text-rose-400';
-        statusDesc.textContent = 'Press START to try again';
-      } finally {
-        setTimeout(resetButton, 3500);
-      }
-    }
-
-    function resetButton() {
-      startBtn.className = 'w-56 h-56 rounded-full bg-gradient-to-tr from-[#0abf53] to-[#00c853] text-slate-950 font-black text-3xl uppercase tracking-wider shadow-2xl transition-all duration-200 active:scale-95 flex flex-col items-center justify-center pulse-ring';
-      btnIcon.textContent = '⚡';
-      btnText.textContent = 'START';
-      statusTitle.textContent = 'Ready for next tap';
-      statusTitle.className = 'text-sm font-semibold text-slate-300';
-      statusDesc.textContent = 'Press START to activate selected terminal';
-      terminalSelect.disabled = false;
-      isBusy = false;
-    }
-
-    socket.on('initial_state', (state) => {
-      if (state.terminals) {
-        terminalsMap = state.terminals;
-        updateTerminalUI();
-      }
+      // Example of triggering the payment on the backend
+      fetch('/api/start-transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ terminalId: selectedTerminal, amount: 10 })
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log('Transaction initiated on:', selectedTerminal);
+        // Provide haptic feedback if on mobile
+        if (navigator.vibrate) navigator.vibrate(50);
+      })
+      .catch(err => console.error('Error starting transaction:', err));
     });
-
-    socket.on('tap_success', (data) => {
-      if (data.state.terminals) {
-        terminalsMap = data.state.terminals;
-        updateTerminalUI();
-      }
-    });
-
-    loadTerminals();
   </script>
 </body>
 </html>
