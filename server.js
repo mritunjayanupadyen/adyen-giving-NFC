@@ -20,13 +20,13 @@ const SIMULATION_MODE = process.env.SIMULATION_MODE === 'true';
 // Terminal Fleet Configuration (Includes your 3 physical terminals)
 const TERMINAL_REGISTRY = {
   'booth-1':  { id: 'booth-1',  name: 'Booth 1 - P400+ (807243868)', poiid: 'P400Plus-807243868', taps: 0 },
-  'booth-2':  { id: 'booth-2',  name: 'Booth 2 - P630 (454155335)',  poiid: 'P630-454155335',     taps: 0 },
+  'booth-2':  { id: 'booth-2',  name: 'Booth 2 - P400+ (807102793)',  poiid: 'P400Plus-807102793',     taps: 0 },
   'booth-3':  { id: 'booth-3',  name: 'Booth 3 - V400m (452806254)', poiid: 'V400m-452806254',    taps: 0 },
-  'booth-4':  { id: 'booth-4',  name: 'Booth 4 - Experience',        poiid: 'P400Plus-807243871', taps: 0 },
-  'booth-5':  { id: 'booth-5',  name: 'Booth 5 - Solutions',         poiid: 'P400Plus-807243872', taps: 0 },
-  'booth-6':  { id: 'booth-6',  name: 'Booth 6 - Community',         poiid: 'P400Plus-807243873', taps: 0 },
-  'booth-7':  { id: 'booth-7',  name: 'Booth 7 - Giving',            poiid: 'P400Plus-807243874', taps: 0 },
-  'booth-8':  { id: 'booth-8',  name: 'Booth 8 - Innovation',        poiid: 'P400Plus-807243875', taps: 0 },
+  'booth-4':  { id: 'booth-4',  name: 'Booth 4 - V400cPlus (452859670)', poiid: 'V400cPlus-452859670', taps: 0 },
+  'booth-5':  { id: 'booth-5',  name: 'Booth 5 - P400+ (806092751)',poiid: 'P400Plus-806092751', taps: 0 },
+  'booth-6':  { id: 'booth-6',  name: 'Booth 6 - P400+ (807095942)',poiid: 'P400Plus-807095942', taps: 0 },
+  'booth-7':  { id: 'booth-7',  name: 'Booth 7 - S1F2 (000158254409646)',poiid: 'S1F2-000158254409646', taps: 0 },
+  'booth-8':  { id: 'booth-8',  name: 'Booth 8 - S1F2 (000158254409654)',poiid: 'S1F2-000158254409654', taps: 0 },
   'booth-9':  { id: 'booth-9',  name: 'Booth 9 - Engagement',        poiid: 'P400Plus-807243876', taps: 0 },
   'booth-10': { id: 'booth-10', name: 'Booth 10 - Future',           poiid: 'P400Plus-807243877', taps: 0 }
 };
