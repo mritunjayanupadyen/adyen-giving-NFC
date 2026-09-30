@@ -42,6 +42,7 @@
       <p class="text-slate-300 text-base font-medium mb-1">
         Thank you to everyone in the room! Every tap at the terminal makes an immediate impact.
       </p>
+
       <div class="flex flex-col items-center gap-3 mt-6">
         <button onclick="dismissMilestone()" class="w-full bg-gradient-to-r from-[#0abf53] to-[#008FD3] hover:brightness-110 active:scale-95 text-slate-950 font-black text-lg py-4 px-8 rounded-2xl shadow-xl transition-all">
           Keep the Momentum Going! 🚀
@@ -60,17 +61,20 @@
 
     <!-- Top Navigation & Triple Branding Header -->
     <header class="flex flex-col sm:flex-row items-center justify-between pb-6 mb-6 border-b border-slate-800/80 gap-4">
-
-      <!-- White pill container to perfectly blend the JPEG backgrounds -->
+      <!-- White pill container -->
       <div class="bg-white px-6 py-3 rounded-2xl flex items-center space-x-5 shadow-lg">
         <!-- Adyen Logo -->
-        <img src="/images/Adyen%20Logo.jpeg" alt="Adyen" class="h-7 object-contain" />
+        <img src="/images/Adyen%20Logo.jpeg" alt="Adyen" class="h-7 object-contain" onerror="this.src='/images/adyen.png'" />
         <span class="text-slate-300 font-light text-xl">✕</span>
+
         <!-- SAP Logo -->
-        <img src="/images/SAP%20LOGO.jpeg" alt="SAP" class="h-9 object-contain" />
+        <img src="/images/SAP%20LOGO.jpeg" alt="SAP" class="h-9 object-contain" onerror="this.src='/images/sap.png'" />
         <span class="text-slate-300 font-light text-xl">✕</span>
-        <!-- Parloa Logo with Fallback -->
-        <img src="/images/parloa_logo.jpeg" onerror="this.onerror=null; this.src='/images/image%20(6).png';" alt="Parloa" class="h-7 object-contain" />
+
+        <!-- Parloa Logo with multi-layer fallback -->
+        <img id="parloa-logo" src="/images/parloa_logo.jpeg" alt="Parloa" class="h-7 object-contain" 
+             onerror="this.onerror=null; this.src='/images/image%20(6).png'; this.onerror=() => { this.style.display='none'; document.getElementById('parloa-badge-fallback').classList.remove('hidden'); };" />
+        <span id="parloa-badge-fallback" class="hidden text-xs font-black tracking-widest text-slate-900 bg-slate-100 px-2 py-1 rounded border border-slate-300">PARLOA</span>
 
         <div class="h-6 w-px bg-slate-300 hidden sm:block mx-2"></div>
         <span class="text-slate-500 font-bold text-sm hidden sm:inline tracking-widest uppercase">
@@ -92,7 +96,8 @@
 
     <!-- Main Stage Grid -->
     <main class="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-grow">
-      <!-- Left Column: Total Raised Card & Single Bar Chart -->
+
+      <!-- Left Column: Total Raised Card & Bar Chart -->
       <section class="lg:col-span-7 flex flex-col gap-6">
         <div id="total-card" class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-8 shadow-2xl transition-all duration-300">
           <div class="text-xs font-bold text-[#0abf53] tracking-wider uppercase mb-4">
@@ -108,6 +113,7 @@
             <span id="total-donors" class="text-2xl font-extrabold text-white">0</span>
           </div>
         </div>
+
         <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-6 shadow-2xl flex-grow flex flex-col justify-between">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Milestone Progress</h3>
@@ -131,12 +137,14 @@
           </div>
         </div>
       </section>
+
     </main>
 
     <!-- Discreet Admin Indicator -->
     <div id="admin-indicator" class="hidden text-right text-[10px] text-emerald-500/80 font-mono tracking-widest uppercase pt-2">
       ⚡ Presenter Admin Mode Active (Hotkeys 1, 2, 3, M, Shift+R Enabled)
     </div>
+
   </div>
 
   <script>
@@ -247,33 +255,40 @@
 
       const feedContainer = document.getElementById('activity-feed');
       const items = state.recentDonations || [];
+
       if (items.length > 0) {
         feedContainer.innerHTML = items.map(item => {
-          // Convert to Las Vegas time explicitly (Pacific Time)
-          const lvTime = new Date().toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          // Explicit Pacific Time formatting
+          const lvTime = new Date().toLocaleTimeString('en-US', {
+            timeZone: 'America/Los_Angeles',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+          });
 
-          // Grab booth name robustly (stripping any terminal IDs separated by dashes)
-          let rawBooth = item.terminal || item.terminalName || item.terminalId || 'Booth';
-          let boothName = rawBooth.split('-')[0].trim();
+          // Dynamic partner booth extraction (e.g. "Booth Adyen", "Booth Parloa")
+          let rawBooth = item.terminal || item.terminalName || 'Booth';
+          let boothName = rawBooth.split(' - ')[0].trim();
 
           return `
-          <div class="flex justify-between items-center bg-[#080d19] border border-slate-800/80 rounded-2xl p-4 transition-all">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-emerald-950/70 border border-emerald-500/40 flex items-center justify-center text-emerald-400 flex-shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-                </svg>
+            <div class="flex justify-between items-center bg-[#080d19] border border-slate-800/80 rounded-2xl p-4 transition-all">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-emerald-950/70 border border-emerald-500/40 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-white">Recorded at ${boothName}</div>
+                  <div class="text-[11px] text-slate-400 font-medium uppercase">${lvTime} Pacific Time</div>
+                </div>
               </div>
-              <div>
-                <div class="text-sm font-bold text-white">Recorded at ${boothName}</div>
-                <div class="text-[11px] text-slate-400 font-medium uppercase">${lvTime} Pacific Time</div>
+              <div class="text-lg font-bold text-[#0abf53] font-mono">
+                +$${item.amountUSD || 10} <span class="text-xs text-slate-400 font-sans font-normal">USD</span>
               </div>
             </div>
-            <div class="text-lg font-bold text-[#0abf53] font-mono">
-              +$10 <span class="text-xs text-slate-400 font-sans font-normal">USD</span>
-            </div>
-          </div>
-        `}).join('');
+          `;
+        }).join('');
+      } else {
+        feedContainer.innerHTML = '<div class="text-center py-20 text-slate-500 text-sm">Ready for live event. Waiting for first contribution...</div>';
       }
 
       if (isNew) {
@@ -287,15 +302,20 @@
 
     socket.on('initial_state', (state) => updateUI(state, false));
     socket.on('donation_received', (data) => updateUI(data.state, true));
+    socket.on('state_reset', (state) => updateUI(state, false));
 
     window.addEventListener('keydown', (e) => {
-      if (!isAdmin) return; 
-      if (e.key === '1') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10, terminalName: 'Booth 1' }) });
-      if (e.key === '2') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10, terminalName: 'Booth 2' }) });
-      if (e.key === '3') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10, terminalName: 'Booth 3' }) });
+      if (!isAdmin) return;
+
+      if (e.key === '1') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10 }) });
+      if (e.key === '2') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10 }) });
+      if (e.key === '3') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10 }) });
       if (e.key.toLowerCase() === 'm') fetch('/api/jump-milestone', { method: 'POST' });
+
       if (e.shiftKey && e.key.toLowerCase() === 'r') {
-        if (confirm("Reset dashboard to clean $0 USD?")) fetch('/api/reset', { method: 'POST' });
+        if (confirm("Reset dashboard to clean $0 USD?")) {
+          fetch('/api/reset', { method: 'POST' });
+        }
       }
     });
   </script>

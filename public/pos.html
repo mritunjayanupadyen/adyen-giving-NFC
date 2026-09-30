@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Adyen Charity POS</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Restored your original socket.io connection -->
   <script src="/socket.io/socket.io.js"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
     .pulse-ring {
       box-shadow: 0 0 0 0 rgba(10, 191, 83, 0.7);
-      animation: pulse 1.6s infinite cubic-bezier(0.66, 0, 0, 1);
+      animation: pulse 1.6s infinite cubic-bezier(0.66, 0, 1);
     }
     @keyframes pulse {
       to { box-shadow: 0 0 0 28px rgba(10, 191, 83, 0); }
@@ -22,13 +21,14 @@
 
   <div class="max-w-sm w-full bg-[#0c1424] border border-slate-800/90 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
 
-    <!-- New Header Logos -->
+    <!-- Header Logos -->
     <div class="bg-white px-4 py-3 rounded-2xl flex items-center space-x-3 shadow-lg mb-10 w-full justify-center">
-      <img src="/images/Adyen%20Logo.jpeg" alt="Adyen" class="h-5 object-contain" />
+      <img src="/images/Adyen%20Logo.jpeg" alt="Adyen" class="h-5 object-contain" onerror="this.src='/images/adyen.png'" />
       <span class="text-slate-300 font-light text-sm">✕</span>
-      <img src="/images/SAP%20LOGO.jpeg" alt="SAP" class="h-7 object-contain" />
+      <img src="/images/SAP%20LOGO.jpeg" alt="SAP" class="h-7 object-contain" onerror="this.src='/images/sap.png'" />
       <span class="text-slate-300 font-light text-sm">✕</span>
-      <img src="/images/parloa_logo.jpeg" alt="Parloa" class="h-5 object-contain" />
+      <img src="/images/parloa_logo.jpeg" alt="Parloa" class="h-5 object-contain" 
+           onerror="this.onerror=null; this.src='/images/image%20(6).png';" />
     </div>
 
     <h1 class="text-xl font-bold text-slate-300 uppercase tracking-widest mb-6 text-center">Select Your Booth</h1>
@@ -45,21 +45,21 @@
       </div>
     </div>
 
-    <!-- Giant Start Button (UI merged with your old status states) -->
+    <!-- Giant Start Button -->
     <button id="start-btn" onclick="startTapSession()" class="w-full bg-gradient-to-r from-[#0abf53] to-[#08a346] hover:brightness-110 active:scale-95 transition-all text-white font-black text-4xl py-8 rounded-2xl shadow-[0_0_50px_rgba(10,191,83,0.3)] border border-emerald-400/50 flex flex-col items-center gap-2 pulse-ring">
       <span id="btn-text">START</span>
       <span id="btn-subtext" class="text-sm font-medium tracking-widest uppercase opacity-80">Tap to Donate</span>
     </button>
 
-    <!-- Restored your original status messages below the button -->
+    <!-- Status Messages -->
     <div id="status-card" class="mt-6 text-center min-h-[50px] flex flex-col items-center justify-center w-full">
       <p id="status-title" class="text-sm font-semibold text-slate-400">Ready for next tap</p>
       <p id="status-desc" class="text-xs text-slate-500 mt-1">POIID: <span id="active-poiid" class="font-mono text-emerald-500">---</span></p>
     </div>
+
   </div>
 
   <script>
-    // RESTORED ORIGINAL LOGIC
     const socket = io();
     const terminalSelect = document.getElementById('terminal-select');
     const activePoiidSpan = document.getElementById('active-poiid');
@@ -71,7 +71,7 @@
     let terminalsMap = {};
     let isBusy = false;
 
-    // Fetch dynamic terminals from backend instead of hardcoding
+    // Fetch dynamic terminals and format with partner booth names
     async function loadTerminals() {
       try {
         const res = await fetch('/api/terminals');
@@ -80,16 +80,16 @@
         if (data.success && data.terminals.length > 0) {
           terminalSelect.innerHTML = '';
           
-          data.terminals.forEach((term, index) => {
+          data.terminals.forEach((term) => {
             terminalsMap[term.id] = term;
             
-            // New UI Formatting Logic: "Booth 1-12345"
+            // Extracts "Booth Adyen", "Booth Parloa", etc. from server.js
+            const cleanBooth = term.name.split(' - ')[0].trim();
             const last5 = term.poiid.slice(-5);
-            const boothNum = index + 1;
             
             const opt = document.createElement('option');
             opt.value = term.id;
-            opt.textContent = `Booth ${boothNum}-${last5}`;
+            opt.textContent = `${cleanBooth} (${last5})`;
             terminalSelect.appendChild(opt);
           });
 
@@ -119,7 +119,6 @@
       }
     }
 
-    // Connects perfectly to your backend /api/start-tap
     async function startTapSession() {
       if (isBusy) return;
       const selectedId = terminalSelect.value;
@@ -133,18 +132,19 @@
       isBusy = true;
       terminalSelect.disabled = true;
 
-      // Update UI to "Waiting" state
+      // Waiting State
       startBtn.classList.remove('pulse-ring', 'bg-gradient-to-r', 'from-[#0abf53]', 'to-[#08a346]', 'border-emerald-400/50');
       startBtn.classList.add('bg-amber-500', 'border-amber-400', 'animate-pulse');
       btnText.textContent = 'TAP CARD';
       btnSubtext.textContent = 'Waiting for terminal...';
-      statusTitle.textContent = `Present card on Booth`;
+
+      const cleanBooth = currentTerminal.name.split(' - ')[0].trim();
+      statusTitle.textContent = `Present card on ${cleanBooth}`;
       statusTitle.className = 'text-sm font-bold text-amber-500';
 
       if (navigator.vibrate) navigator.vibrate(50);
 
       try {
-        // EXACT ORIGINAL BACKEND CALL
         const response = await fetch('/api/start-tap', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -153,7 +153,7 @@
         const result = await response.json();
 
         if (result.success) {
-          // Success UI
+          // Success State
           startBtn.classList.remove('bg-amber-500', 'border-amber-400', 'animate-pulse');
           startBtn.classList.add('bg-emerald-500', 'border-emerald-400');
           btnText.textContent = 'SUCCESS!';
@@ -166,7 +166,7 @@
           throw new Error(result.error || 'Tap failed');
         }
       } catch (err) {
-        // Error UI
+        // Error State
         startBtn.classList.remove('bg-amber-500', 'border-amber-400', 'animate-pulse');
         startBtn.classList.add('bg-rose-600', 'border-rose-400');
         btnText.textContent = 'RETRY';
@@ -179,18 +179,15 @@
     }
 
     function resetButton() {
-      // Reset to initial UI state
       startBtn.className = 'w-full bg-gradient-to-r from-[#0abf53] to-[#08a346] hover:brightness-110 active:scale-95 transition-all text-white font-black text-4xl py-8 rounded-2xl shadow-[0_0_50px_rgba(10,191,83,0.3)] border border-emerald-400/50 flex flex-col items-center gap-2 pulse-ring';
       btnText.textContent = 'START';
       btnSubtext.textContent = 'Tap to Donate';
       statusTitle.textContent = 'Ready for next tap';
       statusTitle.className = 'text-sm font-semibold text-slate-400';
-      
       terminalSelect.disabled = false;
       isBusy = false;
     }
 
-    // Restored Socket logic to keep terminals synced
     socket.on('initial_state', (state) => {
       if (state.terminals) {
         terminalsMap = state.terminals;
@@ -205,7 +202,6 @@
       }
     });
 
-    // Initialize
     loadTerminals();
   </script>
 </body>
