@@ -19,7 +19,7 @@ const SIMULATION_MODE = process.env.SIMULATION_MODE === 'true';
 
 // Terminal Fleet Configuration (Includes your 10 physical terminals)
 const TERMINAL_REGISTRY = {
-  'booth-1':  { id: 'booth-1',  name: 'Booth Adyen - P400+ (807243868)', poiid: 'P400Plus-807243868', taps: 0 },
+  'booth-1':  { id: 'booth-1',  name: 'Booth Adyen - S1F4Pro (000195252606357)', poiid: 'S1F4Pro-000195252606357', taps: 0 },
   'booth-2':  { id: 'booth-2',  name: 'Booth Parloa - P400+ (807102793)',  poiid: 'P400Plus-807102793',     taps: 0 },
   'booth-3':  { id: 'booth-3',  name: 'Booth Docusign - V400m (452806254)', poiid: 'V400m-452806254',    taps: 0 },
   'booth-4':  { id: 'booth-4',  name: 'Booth DataXstream - V400cPlus (452859670)', poiid: 'V400cPlus-452859670', taps: 0 },
@@ -28,7 +28,7 @@ const TERMINAL_REGISTRY = {
   'booth-7':  { id: 'booth-7',  name: 'Booth ASAR - S1F2 (000158254409646)',poiid: 'S1F2-000158254409646', taps: 0 },
   'booth-8':  { id: 'booth-8',  name: 'Booth Pricefx - S1F2 (000158254409654)',poiid: 'S1F2-000158254409654', taps: 0 },
   'booth-9':  { id: 'booth-9',  name: 'Booth Coveo - M400 (807353540)',poiid: 'M400-807353540', taps: 0 },
-  'booth-10': { id: 'booth-10', name: 'Booth Anup - S1F4Pro (000195252606357)',poiid: 'S1F4Pro-000195252606357', taps: 0 }
+  'booth-10': { id: 'booth-10', name: 'Booth Display - P400+ (807243868)', poiid: 'P400Plus-807243868', taps: 0 }
 };
 
 // Global Charity State formatted for the Stage Dashboard
