@@ -14,7 +14,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Configuration
 const ADYEN_API_KEY = process.env.ADYEN_API_KEY;
 const ADYEN_ENDPOINT = process.env.ADYEN_ENDPOINT || 'https://terminal-api-test.adyen.com/sync';
-const DONATION_AMOUNT = parseInt(process.env.DONATION_AMOUNT || '10', 10);
+const DONATION_AMOUNT = 20;
 const SIMULATION_MODE = process.env.SIMULATION_MODE === 'true';
 
 // Terminal Fleet Configuration (Includes your 10 physical terminals)

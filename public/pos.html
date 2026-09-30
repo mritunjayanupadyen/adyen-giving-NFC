@@ -76,17 +76,17 @@
       try {
         const res = await fetch('/api/terminals');
         const data = await res.json();
-        
+
         if (data.success && data.terminals.length > 0) {
           terminalSelect.innerHTML = '';
-          
+
           data.terminals.forEach((term) => {
             terminalsMap[term.id] = term;
-            
+
             // Extracts "Booth Adyen", "Booth Parloa", etc. from server.js
             const cleanBooth = term.name.split(' - ')[0].trim();
             const last5 = term.poiid.slice(-5);
-            
+
             const opt = document.createElement('option');
             opt.value = term.id;
             opt.textContent = `${cleanBooth} (${last5})`;
@@ -153,11 +153,11 @@
         const result = await response.json();
 
         if (result.success) {
-          // Success State
+          // Success State showing $20 USD contributed
           startBtn.classList.remove('bg-amber-500', 'border-amber-400', 'animate-pulse');
           startBtn.classList.add('bg-emerald-500', 'border-emerald-400');
           btnText.textContent = 'SUCCESS!';
-          btnSubtext.textContent = '+$10 USD Contributed';
+          btnSubtext.textContent = `+$${result.addedUSD || 20} USD Contributed`;
           statusTitle.textContent = 'Transaction Complete!';
           statusTitle.className = 'text-sm font-bold text-emerald-500';
 

@@ -133,7 +133,7 @@
             <span class="text-xs font-medium text-slate-500">Live from Las Vegas</span>
           </div>
           <div id="activity-feed" class="flex flex-col gap-3 overflow-y-auto flex-grow max-h-[500px]">
-            <div class="text-center py-20 text-slate-500 text-sm">Waiting for first contribution...</div>
+            <div class="text-center py-20 text-slate-500 text-sm">Ready for live event. Waiting for first contribution...</div>
           </div>
         </div>
       </section>
@@ -267,6 +267,7 @@
           // Dynamic partner booth extraction (e.g. "Booth Adyen", "Booth Parloa")
           let rawBooth = item.terminal || item.terminalName || 'Booth';
           let boothName = rawBooth.split(' - ')[0].trim();
+          const donationAmount = item.amountUSD || 20;
 
           return `
             <div class="flex justify-between items-center bg-[#080d19] border border-slate-800/80 rounded-2xl p-4 transition-all">
@@ -282,7 +283,7 @@
                 </div>
               </div>
               <div class="text-lg font-bold text-[#0abf53] font-mono">
-                +$${item.amountUSD || 10} <span class="text-xs text-slate-400 font-sans font-normal">USD</span>
+                +$${donationAmount} <span class="text-xs text-slate-400 font-sans font-normal">USD</span>
               </div>
             </div>
           `;
@@ -307,9 +308,10 @@
     window.addEventListener('keydown', (e) => {
       if (!isAdmin) return;
 
-      if (e.key === '1') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10 }) });
-      if (e.key === '2') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10 }) });
-      if (e.key === '3') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 10 }) });
+      // Simulated taps updated to $20 USD
+      if (e.key === '1') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 20 }) });
+      if (e.key === '2') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 20 }) });
+      if (e.key === '3') fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 20 }) });
       if (e.key.toLowerCase() === 'm') fetch('/api/jump-milestone', { method: 'POST' });
 
       if (e.shiftKey && e.key.toLowerCase() === 'r') {
