@@ -37,7 +37,7 @@
         Milestone Achieved
       </span>
       <h2 id="milestone-title" class="text-3xl font-extrabold text-white tracking-tight mb-2">
-        We just crossed the $2,500 Milestone!
+        We just crossed the $5,000 Milestone!
       </h2>
       <p class="text-slate-300 text-base font-medium mb-1">
         Thank you to everyone in the room! Every tap at the terminal makes an immediate impact.
@@ -85,7 +85,7 @@
       <div class="flex items-center gap-3">
         <div class="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-2">
           <span class="text-xs text-slate-400 font-medium">Next Goal:</span>
-          <span id="target-pill-amount" class="text-sm font-bold text-emerald-400">$2,500 USD</span>
+          <span id="target-pill-amount" class="text-sm font-bold text-emerald-400">$5,000 USD</span>
         </div>
         <div class="bg-slate-900 border border-slate-800 px-3 py-2 rounded-xl flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
@@ -117,7 +117,7 @@
         <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-6 shadow-2xl flex-grow flex flex-col justify-between">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Milestone Progress</h3>
-            <span id="chart-subtext" class="text-xs text-slate-400 font-medium">Target: $2,500 USD</span>
+            <span id="chart-subtext" class="text-xs text-slate-400 font-medium">Target: $5,000 USD</span>
           </div>
           <div class="relative w-full h-56 flex-grow">
             <canvas id="givingChart"></canvas>
@@ -179,7 +179,7 @@
         scales: {
           y: {
             beginAtZero: true,
-            suggestedMax: 2500,
+            suggestedMax: 5000,
             grid: { color: 'rgba(255, 255, 255, 0.06)' },
             ticks: { color: '#94a3b8', font: { family: 'sans-serif', size: 12 }, callback: (v) => '$' + v.toLocaleString() }
           },
@@ -200,8 +200,8 @@
     }
 
     function checkMilestone(total) {
-      const milestoneReached = Math.floor(total / 2500) * 2500;
-      if (milestoneReached >= 2500 && milestoneReached > lastCelebratedMilestone) {
+      const milestoneReached = Math.floor(total / 5000) * 5000;
+      if (milestoneReached >= 5000 && milestoneReached > lastCelebratedMilestone) {
         lastCelebratedMilestone = milestoneReached;
         showMilestoneModal(milestoneReached);
       }
@@ -245,7 +245,7 @@
       document.getElementById('total-amount').textContent = currentTotal.toLocaleString();
       document.getElementById('total-donors').textContent = state.totalDonors || 0;
 
-      const nextGoal = (Math.floor(currentTotal / 2500) + 1) * 2500;
+      const nextGoal = (Math.floor(currentTotal / 5000) + 1) * 5000;
       document.getElementById('target-pill-amount').textContent = `$${nextGoal.toLocaleString()} USD`;
       document.getElementById('chart-subtext').textContent = `Target: $${nextGoal.toLocaleString()} USD`;
 
